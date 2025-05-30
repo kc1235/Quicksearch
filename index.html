@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickSearch - Direct Links</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --border-color: #000000;
+            --accent-color: #000000;
+            --placeholder-text: #888888;
+            --link-color: #000000;
+            --link-hover-color: #555555;
+            --disabled-opacity: 0.6;
+            --highlight-bg: #ffff00;
+            --highlight-text: #000000;
+            --button-secondary-bg: #f0f0f0;
+            --button-secondary-text: #000000;
+            --button-secondary-border: #cccccc;
+
+            --font-size-base: 14px; --font-size-sm: 12px;
+            --font-size-lg: 16px; --font-size-xl: 18px;
+            --font-size-title: 22px;
+        }
+        /* Styles remain largely the same as the previous "Enhanced" version */
+        /* ... (Keep all CSS from the previous "Enhanced" example) ... */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow-x: hidden; }
+
+        body {
+            font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: var(--font-size-base);
+        }
+
+        .app-header-wrapper {
+            width: 100%;
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--border-color);
+            padding: 15px 0;
+            position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: center;
+        }
+        .app-header-content {
+            width: 100%; max-width: 800px; padding: 0 15px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .app-title {
+            font-family: 'Inter', sans-serif; font-size: var(--font-size-title);
+            font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px;
+            text-align: center; margin-bottom: 5px;
+        }
+        .search-bar-area { display: flex; gap: 8px; align-items: center; width: 100%; }
+        .search-input {
+            flex-grow: 1; padding: 10px 12px; font-family: 'Roboto Mono', monospace;
+            font-size: var(--font-size-base); color: var(--text-color);
+            background-color: var(--bg-color); border: 2px solid var(--border-color);
+            outline: none; min-width: 0;
+        }
+        .search-input::placeholder { color: var(--placeholder-text); }
+        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-color); }
+
+        .action-button { /* Main search button */
+            background-color: var(--text-color); color: var(--bg-color);
+            border: 2px solid var(--text-color); padding: 10px 15px;
+            font-size: calc(var(--font-size-base) * 0.9); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background-color 0.1s ease, color 0.1s ease;
+            min-height: 44px; white-space: nowrap;
+        }
+        .action-button:hover, .action-button:focus { background-color: var(--bg-color); color: var(--text-color); outline: none; }
+        .action-button:focus-visible { box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--accent-color); }
+        .action-button svg { width: 16px; height: 16px; fill: currentColor; }
+        .action-button span { display: inline; }
+
+        .results-section { width: 100%; flex-grow: 1; display: flex; justify-content: center; padding-top: 15px; }
+        .results-area {
+            width: 100%; max-width: 800px; padding: 0 15px 30px 15px;
+            display: flex; flex-direction: column; gap: 20px; /* Increased gap for actions */
+        }
+        .status-message {
+            font-size: var(--font-size-lg); text-align: center;
+            padding: 30px 15px; color: var(--placeholder-text);
+        }
+        .status-message.loading::before {
+            content: ""; display: inline-block; width: 18px; height: 18px;
+            border: 2px solid var(--placeholder-text); border-top-color: var(--text-color);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 8px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-item {
+            border: 2px solid var(--border-color); padding: 15px; /* Increased padding */
+            background-color: var(--bg-color); display: flex; flex-direction: column; gap: 10px; /* Gap for actions */
+        }
+        .result-item-main-content { display: flex; flex-direction: row; gap: 15px; }
+        .result-item-text-content { flex-grow: 1; }
+        .result-item-title a {
+            font-family: 'Inter', sans-serif; font-size: var(--font-size-xl);
+            font-weight: 700; color: var(--link-color);
+            text-decoration: none; display: block; margin-bottom: 4px;
+        }
+        .result-item-title a:hover { color: var(--link-hover-color); text-decoration: underline; }
+        .result-item-url {
+            font-size: var(--font-size-sm); color: var(--placeholder-text);
+            margin-bottom: 6px; word-break: break-all;
+        }
+        .result-item-url a { color: inherit; text-decoration: none; }
+        .result-item-url a:hover { text-decoration: underline; }
+        .result-item-snippet { font-size: var(--font-size-base); line-height: 1.6; }
+        .result-item-snippet mark { background-color: var(--highlight-bg); color: var(--highlight-text); padding: 0 1px; font-weight: bold; }
+        .result-item-image-container {
+            flex-shrink: 0; /* Prevent image from shrinking too much */
+            display: flex; align-items: flex-start; /* Align image to top */
+        }
+        .result-item img {
+            max-width: 80px; max-height: 80px; object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-item-actions {
+            display: flex; gap: 10px; margin-top: 5px;
+            border-top: 1px solid var(--button-secondary-border); /* Subtle separator */
+            padding-top: 10px;
+        }
+        .result-action-button { /* For "Summarize" */
+            background-color: var(--button-secondary-bg); color: var(--button-secondary-text);
+            border: 1px solid var(--button-secondary-border); padding: 6px 10px;
+            font-size: var(--font-size-sm); font-weight: 500;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+            transition: background-color 0.1s ease, border-color 0.1s ease;
+        }
+        .result-action-button:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            border-color: var(--text-color);
+        }
+        .result-action-button svg { width: 12px; height: 12px; margin-right: 5px; vertical-align: middle; fill: currentColor; }
+
+        .no-results-image { display: block; margin: 20px auto; max-width: 100px; opacity: 0.5; }
+
+        /* Modal for Summary (placeholder) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: none; /* Hidden by default */
+            align-items: center; justify-content: center; z-index: 2000;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: var(--bg-color); color: var(--text-color);
+            border: 2px solid var(--border-color); padding: 25px;
+            max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-title { font-family: 'Inter', sans-serif; font-size: var(--font-size-xl); font-weight: 700; }
+        .modal-close-button {
+            background: none; border: none; font-size: 24px; cursor: pointer;
+            color: var(--text-color); padding: 5px; line-height: 1;
+        }
+        .modal-body { font-size: var(--font-size-base); line-height: 1.7; }
+        .modal-body p:not(:last-child) { margin-bottom: 10px; }
+        .modal-body .loading-summary::before { /* Similar to status message loader */
+            content: ""; display: inline-block; width: 16px; height: 16px;
+            border: 2px solid var(--placeholder-text); border-top-color: var(--text-color);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-right: 8px; vertical-align: middle;
+        }
+
+
+        /* --- Media Queries for Responsiveness --- */
+        @media (max-width: 599.98px) {
+            :root {
+                --font-size-base: 13px; --font-size-sm: 11px;
+                --font-size-lg: 15px; --font-size-xl: 16px;
+                --font-size-title: 20px;
+            }
+            .app-header-content, .results-area { padding-left: 10px; padding-right: 10px; }
+            .app-title { letter-spacing: 1px; }
+            .action-button span { display: none; }
+            .action-button { padding: 10px; gap: 0; }
+            .action-button svg { width: 20px; height: 20px; }
+
+            .result-item-main-content { flex-direction: column; } /* Stack text and image */
+            .result-item-image-container { align-self: center; margin-top: 10px; } /* Center image */
+            .result-item img { max-width: 100px; max-height: 100px; } /* Allow image to be a bit larger */
+        }
+        @media (min-width: 600px) {
+            :root {
+                --font-size-base: 14px; --font-size-sm: 12px;
+                --font-size-lg: 16px; --font-size-xl: 18px;
+                --font-size-title: 24px;
+            }
+            .app-header-wrapper { padding: 20px 0; }
+            .app-header-content, .results-area { padding-left: 20px; padding-right: 20px; }
+        }
+        @media (min-width: 992px) {
+             :root {
+                --font-size-base: 15px; --font-size-sm: 13px;
+                --font-size-lg: 17px; --font-size-xl: 20px;
+                --font-size-title: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header-wrapper">
+        <div class="app-header-content">
+            <h1 class="app-title">QuickSearch</h1>
+            <form id="searchForm" class="search-bar-area">
+                <input type="search" id="searchInput" class="search-input" placeholder="Search the web...">
+                <button type="submit" class="action-button" id="searchButton">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+                    <span>Search</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <main class="results-section">
+        <div class="results-area" id="resultsArea">
+            <!-- Status message and results will be rendered here by JS -->
+        </div>
+    </main>
+
+    <!-- Modal for Summary Placeholder -->
+    <div class="modal-overlay" id="summaryModalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="summaryModalTitle">Summary</h2>
+                <button class="modal-close-button" id="summaryModalCloseBtn" aria-label="Close modal">×</button>
+            </div>
+            <div class="modal-body" id="summaryModalBody">
+                <p>Loading summary...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchForm = document.getElementById('searchForm');
+            const searchInput = document.getElementById('searchInput');
+            const resultsArea = document.getElementById('resultsArea');
+            const summaryModalOverlay = document.getElementById('summaryModalOverlay');
+            const summaryModalTitle = document.getElementById('summaryModalTitle');
+            const summaryModalBody = document.getElementById('summaryModalBody');
+            const summaryModalCloseBtn = document.getElementById('summaryModalCloseBtn');
+
+            searchForm.addEventListener('submit', handleSearchSubmit);
+            summaryModalOverlay.addEventListener('click', handleModalOverlayClick);
+            summaryModalCloseBtn.addEventListener('click', closeModal);
+
+            function handleSearchSubmit(event) {
+                event.preventDefault();
+                const query = searchInput.value.trim();
+                if (!query) {
+                    renderStatusMessage('Please enter a search term.');
+                    return;
+                }
+                performSearch(query);
+            }
+
+            function renderStatusMessage(message, isLoading = false) {
+                resultsArea.innerHTML = '';
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-message';
+                if (isLoading) statusDiv.classList.add('loading');
+                statusDiv.textContent = message;
+                resultsArea.appendChild(statusDiv);
+            }
+
+            async function performSearch(query) {
+                renderStatusMessage('Searching the web...', true);
+                const apiUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&pretty=1&no_html=1&skip_disambig=1`;
+
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) throw new Error(`API error! status: ${response.status}`);
+                    const data = await response.json();
+                    displayResults(data, query);
+                } catch (error) {
+                    console.error("Search API Error:", error);
+                    renderStatusMessage(`Search failed. Please try again. (${error.message})`);
+                }
+            }
+
+            function displayResults(data, query) {
+                resultsArea.innerHTML = '';
+                let foundResults = false;
+
+                const processResult = (itemData, isAbstract = false) => {
+                    foundResults = true;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'result-item';
+                    // Add has-image class logic here (same as before)
+                    if (isAbstract && itemData.Image && !itemData.ImageIsLogo && itemData.Image.trim() !== "") {
+                        itemDiv.classList.add('has-image');
+                    } else if (!isAbstract && itemData.Icon && itemData.Icon.URL && !itemData.Icon.URL.includes("is_logo") && itemData.Icon.URL.trim() !== "") {
+                        itemDiv.classList.add('has-image');
+                    }
+
+                    const mainContentDiv = document.createElement('div');
+                    mainContentDiv.className = 'result-item-main-content';
+                    const textContentDiv = document.createElement('div');
+                    textContentDiv.className = 'result-item-text-content';
+
+                    const rawUrl = isAbstract ? (itemData.AbstractURL || '#') : itemData.FirstURL;
+                    const officialUrl = purifyUrl(rawUrl); // ** NEW: Purify URL **
+
+                    const title = isAbstract ? (itemData.Heading || query) : getTitleFromHtml(itemData.Result);
+                    const snippet = isAbstract ? cleanHtml(itemData.AbstractText) : getSnippetFromHtml(itemData.Result);
+                    const source = isAbstract ? itemData.AbstractSource : null;
+
+                    textContentDiv.innerHTML = `
+                        <h3 class="result-item-title"><a href="${officialUrl}" target="_blank" rel="noopener noreferrer">${title}${isAbstract ? ' (Answer)' : ''}</a></h3>
+                        <p class="result-item-url"><a href="${officialUrl}" target="_blank" rel="noopener noreferrer">${getDomain(officialUrl)}</a></p>
+                        <p class="result-item-snippet">${snippet}</p>
+                        ${source ? `<p class="result-item-url">Source: <a href="${officialUrl}" target="_blank" rel="noopener noreferrer">${source}</a></p>` : ''}
+                    `;
+                    mainContentDiv.appendChild(textContentDiv);
+
+                    // Image handling (same as before)
+                    const imageSrc = isAbstract
+                        ? (itemData.Image && !itemData.ImageIsLogo && itemData.Image.trim() !== "" ? `https://duckduckgo.com${itemData.Image}` : null)
+                        : (itemData.Icon && itemData.Icon.URL && !itemData.Icon.URL.includes("is_logo") && itemData.Icon.URL.trim() !== "" ? `https://duckduckgo.com${itemData.Icon.URL}` : null);
+                    if (imageSrc) {
+                        const imageContainer = document.createElement('div');
+                        imageContainer.className = 'result-item-image-container';
+                        const img = document.createElement('img');
+                        img.src = imageSrc;
+                        img.alt = title || 'Result image';
+                        img.onerror = () => img.style.display = 'none';
+                        imageContainer.appendChild(img);
+                        mainContentDiv.appendChild(imageContainer);
+                    }
+                    itemDiv.appendChild(mainContentDiv);
+
+                    // Actions (Summarize button using officialUrl)
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'result-item-actions';
+                    const summarizeButton = document.createElement('button');
+                    summarizeButton.className = 'result-action-button';
+                    summarizeButton.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 18h16V6H4v12zm0-14h16v2H4V4zm4 10h8v-2H8v2zm0-3h8v-2H8v2zm0-3h8V7H8v2z" opacity=".3"/><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 2v2H4V4h16zm0 16H4V6h16v14zM8 7h8v2H8zm0 3h8v2H8zm0 3h8v2H8z"/></svg> Summarize`;
+                    summarizeButton.addEventListener('click', () => showSummaryModal(officialUrl, title, snippet));
+                    actionsDiv.appendChild(summarizeButton);
+                    itemDiv.appendChild(actionsDiv);
+
+                    resultsArea.appendChild(itemDiv);
+                };
+
+                if (data.AbstractText) {
+                    processResult(data, true);
+                }
+                if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+                    data.RelatedTopics.forEach(topic => {
+                        if (topic.Result) processResult(topic, false);
+                    });
+                }
+
+                if (!foundResults) {
+                    renderStatusMessage(`No direct results for "${query}".`);
+                }
+            }
+
+            function showSummaryModal(url, title, fallbackSnippet) {
+                summaryModalTitle.textContent = `Summary: ${title}`;
+                summaryModalBody.innerHTML = '<p class="loading-summary">Fetching and summarizing content... (This is a simulation)</p>';
+                summaryModalOverlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+
+                setTimeout(() => {
+                    if (summaryModalOverlay.style.display === 'flex') {
+                        summaryModalBody.innerHTML = `<p><strong>Original URL:</strong> <a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></p>`;
+                        summaryModalBody.innerHTML += `<p><strong>AI Summary (Simulated):</strong></p><p>${fallbackSnippet || "No snippet available to simulate summary."}</p>`;
+                        summaryModalBody.innerHTML += `<p><em>(Note: Full AI summarization requires a backend service to fetch and process the page content.)</em></p>`;
+                    }
+                }, 1500);
+            }
+            function closeModal() {
+                summaryModalOverlay.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+            function handleModalOverlayClick(event) {
+                if (event.target === summaryModalOverlay) closeModal();
+            }
+
+            // --- Utility Functions ---
+            function purifyUrl(url) {
+                if (!url || typeof url !== 'string') return '#'; // Return a safe fallback
+
+                try {
+                    const parsedUrl = new URL(url);
+                    // Check for common DuckDuckGo redirector pattern
+                    if (parsedUrl.hostname === 'duckduckgo.com' && parsedUrl.pathname === '/l/') {
+                        const uddgParam = parsedUrl.searchParams.get('uddg');
+                        if (uddgParam) {
+                            // Attempt to decode. If it's a valid URL, use it.
+                            try {
+                                const decoded = decodeURIComponent(uddgParam);
+                                // Basic check if it looks like a URL
+                                if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
+                                    return decoded;
+                                }
+                            } catch (e) {
+                                // Decoding failed, or not a valid URL, fall back to original DDG link
+                                console.warn("Failed to decode DDG redirect, using original:", url, e);
+                                return url;
+                            }
+                        }
+                    }
+                    // Add other known redirector patterns here if needed for other APIs
+                } catch (e) {
+                    // If URL parsing fails (e.g., it's not a valid absolute URL), return original or fallback
+                    console.warn("Could not parse URL for purification:", url, e);
+                    return url; // Or return '#' for safety if it's critical
+                }
+                return url; // Return original if no specific redirect pattern matched
+            }
+
+            function getTitleFromHtml(htmlString) {
+                const match = htmlString.match(/<a [^>]*>([^<]+)<\/a>/);
+                return match && match[1] ? cleanHtml(match[1]) : "Untitled";
+            }
+            function getSnippetFromHtml(htmlString) {
+                let snippet = htmlString.replace(/<a [^>]*>[^<]+<\/a>\s*(-|–)\s*/i, '');
+                return cleanHtml(snippet);
+            }
+            function getDomain(url) {
+                try {
+                    const purified = purifyUrl(url); // Purify before getting domain
+                    return new URL(purified).hostname.replace(/^www\./, '');
+                }
+                catch (e) {
+                    const parts = url.split('/');
+                    return parts.length > 2 ? parts[2].replace(/^www\./, '') : url;
+                }
+            }
+            function cleanHtml(html) {
+                if (!html) return "";
+                const SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+                const STYLE_REGEX = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
+                let cleaned = html;
+                while (SCRIPT_REGEX.test(cleaned)) { cleaned = cleaned.replace(SCRIPT_REGEX, ""); }
+                while (STYLE_REGEX.test(cleaned)) { cleaned = cleaned.replace(STYLE_REGEX, ""); }
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = cleaned;
+                return tempDiv.textContent || tempDiv.innerText || "";
+            }
+
+            renderStatusMessage('Type a query to start your QuickSearch.');
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryFromUrl = urlParams.get('q');
+            if (queryFromUrl) {
+                searchInput.value = queryFromUrl;
+                performSearch(queryFromUrl);
+            }
+        });
+    </script>
+</body>
+</html>
